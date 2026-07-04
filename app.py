@@ -1,14 +1,17 @@
 import os
 import threading
 import time
- 
 import joblib
+import schedule
 from flask import Flask, request, jsonify
+from flasgger import Swagger
 
 from database.init_db import init_database
 from ml.train_model import train_and_save_model, MODEL_PATH, VECTORIZER_PATH
+from utils.fetch_tweets import fetch_and_store_tweets
 
 app = Flask(__name__)
+swagger = Swagger(app)
 
 def load_model():
     if os.path.exists(MODEL_PATH) and os.path.exists(VECTORIZER_PATH):
@@ -20,24 +23,48 @@ def load_model():
             print(f"Error loading model: {e}")
     return None, None
 
-def run_scheduler():
-    # Schedule retraining every week
-    # For testing, we could use schedule.every(1).minutes.do(train_and_save_model)
-    schedule.every().week.do(train_and_save_model)
-    print("Scheduler started. Model will be retrained every week.")
+def run_fetch_scheduler():
+    schedule.every(1).hours.do(fetch_and_store_tweets, 2000, "tweet_eval_sentiment")
+    print("Scheduler started. Tweets will be fetched every hour.")
     
     while True:
         schedule.run_pending()
         time.sleep(60)
 
 # Start background scheduler thread
-scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
+scheduler_thread = threading.Thread(target=run_fetch_scheduler, daemon=True)
 scheduler_thread.start()
-
-
 
 @app.route('/sentiment', methods=['POST'])
 def analyze_sentiment():
+    """
+    Analyze sentiment of a list of strings.
+    ---
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: array
+          items:
+            type: string
+          example: ["I love this!", "This is terrible."]
+    responses:
+      200:
+        description: Sentiment scores for the input strings
+        schema:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          example: {"I love this!": 0.8, "This is terrible.": -0.9}
+      400:
+        description: Invalid format
+      503:
+        description: Model not trained yet
+      500:
+        description: Server error
+    """
     try:
         data = request.get_json()
         if not data or not isinstance(data, list):

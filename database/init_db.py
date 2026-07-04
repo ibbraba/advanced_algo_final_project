@@ -2,6 +2,7 @@ import os
 import time
 import mysql.connector
 from mysql.connector import Error
+import csv
 
 def init_database():
     host = os.getenv("DB_HOST", "db")
@@ -54,23 +55,29 @@ def init_database():
         count = cursor.fetchone()[0]
         
         if count == 0:
-            print("Table is empty. Inserting dummy dataset...")
-            dummy_data = [
-                ("I love this product, it is amazing!", 1, 0),
-                ("This is the worst service I have ever experienced.", 0, 1),
-                ("Absolutely fantastic, would buy again.", 1, 0),
-                ("Terrible support and broken item.", 0, 1),
-                ("I am very happy with my purchase.", 1, 0),
-                ("I hate this, total waste of money.", 0, 1),
-                ("Great quality and fast shipping.", 1, 0),
-                ("Awful experience, never again.", 0, 1),
-                ("Superb! Exceeded my expectations.", 1, 0),
-                ("Disgusting behavior from the staff.", 0, 1)
-            ]
-            insert_query = "INSERT INTO tweets (text, positive, negative) VALUES (%s, %s, %s)"
-            cursor.executemany(insert_query, dummy_data)
-            conn.commit()
-            print(f"Inserted {cursor.rowcount} dummy records.")
+            print("Table is empty. Inserting dataset from tweets.csv...")
+            
+            csv_file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tweets.csv')
+            
+            try:
+                with open(csv_file_path, mode='r', encoding='utf-8') as f:
+                    csv_reader = csv.reader(f)
+                    next(csv_reader) # Skip header (text,positive,negative)
+                    data_to_insert = []
+                    for row in csv_reader:
+                        if len(row) == 3:
+                            data_to_insert.append((row[0], int(row[1]), int(row[2])))
+                
+                insert_query = "INSERT INTO tweets (text, positive, negative) VALUES (%s, %s, %s)"
+                # Insert in chunks to avoid overwhelming the database if the file is large
+                chunk_size = 1000
+                for i in range(0, len(data_to_insert), chunk_size):
+                    cursor.executemany(insert_query, data_to_insert[i:i+chunk_size])
+                
+                conn.commit()
+                print(f"Successfully inserted {len(data_to_insert)} records from tweets.csv.")
+            except Exception as e:
+                print(f"Error reading or inserting from tweets.csv: {e}")
         else:
             print(f"Table already contains {count} records. No dummy data inserted.")
             
