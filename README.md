@@ -6,18 +6,10 @@ Cette application permet de détecter les discours haineux.
 
 ### Prérequis
 
-- Avoir Docker et Docker Compose installés
-- Avoir Python 3.12 installé
-
+- Avoir Python et un serveur MySQL install"
 ### Installation
 
-#### Avec Docker
 
-Ouvrir un terminal dans le dossier du projet et lancer les commandes suivantes :
-
-```bash
-docker-compose up --build
-```
 
 #### Sans Docker
 
@@ -26,6 +18,9 @@ docker-compose up --build
 * Avoir Python 3.12 installé
 * Avoir MySQL 8.0 installé
 
+
+#### Clonage du projet 
+
 ```bash
 # Cloner le dépôt
 git clone <repo>
@@ -33,9 +28,23 @@ cd advanced_algo_final_project
 
 # Installer les dépendances
 pip install -r requirements.txt
-
-
 ```
+
+
+#### Paramétrages SQL Server
+
+
+
+Il est nécessaire de configurer un fichier `.env` dans le dossier du projet avec les informations de connexion à la base de données :
+```bash
+DB_HOST=localhost ou [IP_DE_LA_MACHINE_MYSQL]
+DB_USER=[Nom d'utilisateur MySQL]
+DB_PASSWORD=[Mot de passe MySQL]
+DB_NAME=socialmetrics
+DB_PORT=[PORT d'hebergement du serveur MySQL]
+```
+
+
 
 
 
@@ -43,21 +52,13 @@ pip install -r requirements.txt
 ### Démarrage
 
 ```bash
-# Démarrer le conteneur Docker
-./run-api.sh
+python app.py
 ```
+
 
 ### Test
 
 Il est possible de tester l'API via l'interface Swagger : http://localhost:5000/apidocs/
-
-
-ou en ligne de commandes 
-
-```bash
-# Tester l'API
-curl -X POST http://localhost:5000/predict -H "Content-Type: application/json" -d '{"text": "J'aime beaucoup cette vidéo, merci."}'
-```
 
 
 # Entrainement du modèle 
@@ -73,17 +74,13 @@ Notre but est d'avoir une précision et un rappel supérieur à 0.8 mais princip
 
 Nous partons avec un jeu de données avec 50000 tweets au format .csv, les tweets sont chargés en base de données lors de l'initialisation de l'application. 
 
-Après l'entrainement sur fichier csv nous obtenons les metriques suivantes 
+Après l'entrainement sur 11000 tweets nous obtenons les metriques suivantes 
 
 Cross-validation results:
-
-  accuracy: 1.000 (+/- 0.000)
-
-  precision: 1.000 (+/- 0.000)
-
-  recall: 1.000 (+/- 0.000)
-
-  f1: 1.000 (+/- 0.000)
+  accuracy: 0.809 (+/- 0.006)
+  precision: 0.820 (+/- 0.006)
+  recall: 0.937 (+/- 0.007)
+  f1: 0.875 (+/- 0.004)
 
 Mais nous nous appuyons sur un jeu de données simple, il faudrait complexifier les tweets 
 
@@ -112,6 +109,8 @@ python utils/fetch_tweets.py
 
 * Nettoyage texte avant vectorisation 
 * Verification des valeurs vides 
+* Augmentation du jeu de données : Seul 46000 tweets sont disponibles, il faudrait augmenter le jeu de données
 * Importer des jeu de données de tweets difficile à classer (mentions, emojis, fautes d'orthographe, language de tweets)
+Il existe des sous jeux de donnés dans tweet_eval_sentiment. (https://huggingface.co/datasets/cardiffnlp/tweet_eval) 
 * Traduction / tweets en différentes langues 
 * Ajout d'intensités : Les colonnes en BDD indiquent positif ou négatif, il faudrait nuancer les données en ajoutant une colonne d'intensité allant de -2 à 2. (Très négatif, négatif, neutre, positif, très positif)

@@ -23,17 +23,20 @@ def load_model():
             print(f"Error loading model: {e}")
     return None, None
 
-def run_fetch_scheduler():
-    schedule.every(1).hours.do(fetch_and_store_tweets, 2000, "tweet_eval_sentiment")
-    print("Scheduler started. Tweets will be fetched every hour.")
-    
-    while True:
-        schedule.run_pending()
-        time.sleep(60)
+def fetch_and_train_job():
+    fetch_and_store_tweets(2000, "tweet_eval_sentiment")
+    train_and_save_model()
 
-# Start background scheduler thread
-scheduler_thread = threading.Thread(target=run_fetch_scheduler, daemon=True)
-scheduler_thread.start()
+def run_fetch_scheduler():
+    print("Scheduler thread started")
+
+    schedule.every(10).seconds.do(fetch_and_train_job)
+    print(schedule.jobs)
+    while True:
+        print("Checking pending jobs...")
+        schedule.run_pending()
+        time.sleep(5)
+
 
 @app.route('/sentiment', methods=['POST'])
 def analyze_sentiment():
@@ -106,5 +109,9 @@ if __name__ == '__main__':
         print("Initial model training...")
         train_and_save_model()
         
+    # Start background scheduler thread
+    scheduler_thread = threading.Thread(target=run_fetch_scheduler, daemon=True)
+    scheduler_thread.start()
+
     # Run Flask app
     app.run(host='0.0.0.0', port=5000)

@@ -67,8 +67,12 @@ def filter_new_tweets(tweets_data):
     return new_tweets
 
 
-def fetch_and_store_tweets(num_samples=2000, source_name="tweet_eval_sentiment"):
+def fetch_and_store_tweets(num_samples, source_name="tweet_eval_sentiment"):
+   
+    print("Fetching tweets...")
+    
     try:
+        # pyrefly: ignore [missing-import]
         from datasets import load_dataset
     except ImportError:
         print("Missing dependency: pip install datasets")
@@ -131,7 +135,7 @@ def fetch_and_store_tweets(num_samples=2000, source_name="tweet_eval_sentiment")
         return False
 
     if success:
-        update_last_offset(source_name, offset + len(ds))
+        update_last_offset(source_name, offset + len(ds) // 2)
         print("Successfully populated database.")
         return True
     else:
