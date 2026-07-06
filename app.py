@@ -30,12 +30,12 @@ def fetch_and_train_job():
 def run_fetch_scheduler():
     print("Scheduler thread started")
 
-    schedule.every(10).seconds.do(fetch_and_train_job)
+    schedule.every(1).weeks.do(fetch_and_train_job)
     print(schedule.jobs)
     while True:
         print("Checking pending jobs...")
         schedule.run_pending()
-        time.sleep(5)
+        time.sleep(86400)  # Sleep for 1 day
 
 
 @app.route('/sentiment', methods=['POST'])

@@ -1,8 +1,13 @@
+from sklearn.metrics import multilabel_confusion_matrix
 import os
 import joblib
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_predict
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
+from sklearn.metrics import multilabel_confusion_matrix
 
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -65,6 +70,67 @@ def train_and_save_model():
         scoring=['accuracy', 'precision', 'recall', 'f1']
     )
 
+    # Matrices de confusion 
+    # Prédictions obtenues par validation croisée
+    y_pred = cross_val_predict(
+        pipeline,
+        X_text,
+        y,
+        cv=cv
+    )
+
+    """
+    Matrices de confusion : block désactivé dans le CRON job
+     # Une matrice de confusion par classe
+    mcm = multilabel_confusion_matrix(y, y_pred)
+
+    # ===============================
+    # Classe négative (label = 0)
+    # ===============================
+    cm_negative = mcm[0]
+
+    print("\nConfusion Matrix - Negative class")
+    print(cm_negative)
+
+    tn, fp, fn, tp = cm_negative.ravel()
+
+    print(f"TN = {tn}")
+    print(f"FP = {fp}")
+    print(f"FN = {fn}")
+    print(f"TP = {tp}")
+
+    disp = ConfusionMatrixDisplay(
+        confusion_matrix=cm_negative,
+        display_labels=["Not Negative", "Negative"]
+    )
+    disp.plot(cmap="Blues")
+    plt.title("Confusion Matrix - Negative")
+    plt.show()
+
+
+    # ===============================
+    # Classe positive (label = 1)
+    # ===============================
+    cm_positive = mcm[1]
+
+    print("\nConfusion Matrix - Positive class")
+    print(cm_positive)
+
+    tn, fp, fn, tp = cm_positive.ravel()
+
+    print(f"TN = {tn}")
+    print(f"FP = {fp}")
+    print(f"FN = {fn}")
+    print(f"TP = {tp}")
+
+    disp = ConfusionMatrixDisplay(
+        confusion_matrix=cm_positive,
+        display_labels=["Not Positive", "Positive"]
+    )
+    disp.plot(cmap="Greens")
+    plt.title("Confusion Matrix - Positive")
+    plt.show()
+ """
     print("Cross-validation results:")
     for metric in ['accuracy', 'precision', 'recall', 'f1']:
         scores = cv_results[f'test_{metric}']
