@@ -69,9 +69,18 @@ def analyze_sentiment():
         description: Server error
     """
     try:
-        data = request.get_json()
-        if not data or not isinstance(data, list):
-            return jsonify({"error": "Invalid format. Expected a list of strings."}), 400
+        data = request.get_json(silent=True)
+        if data is None:
+            return jsonify({"error": "Invalid or missing JSON payload."}), 400
+            
+        if not isinstance(data, list):
+            return jsonify({"error": "Invalid format. Expected a JSON array (list)."}), 400
+            
+        if len(data) == 0:
+            return jsonify({"error": "The list is empty. Please provide at least one string."}), 400
+            
+        if not all(isinstance(item, str) for item in data):
+            return jsonify({"error": "Invalid format. All elements in the list must be strings."}), 400
         
         model, vectorizer = load_model()
         
